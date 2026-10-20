@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NWS Weather</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- iOS Native App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Weather">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- Link to our styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!-- Full-Screen Animated Background Container -->
+    <!-- Full-Screen Animated Background Container -->
+    <div id="weather-background">
+        <div class="stars"></div>
+        <div class="sun celestial-body"></div>
+        <div class="moon celestial-body"></div>
+        <div id="clouds-container"></div>
+        <canvas id="weather-canvas"></canvas>
+    </div>
+
+    <div id="pull-to-refresh">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- The main container for our app UI -->
+    <main id="app-container">
+        <!-- Install Prompt -->
+        <div id="install-prompt" class="install-card hidden">
+            <div class="install-content">
+                <img src="icon.png" alt="App Icon" class="install-icon">
+                <div class="install-text">
+                    <h4>Install Weather</h4>
+                    <p id="install-instructions">Install this app on your home screen for quick and easy access.</p>
+                </div>
+            </div>
+            <button id="install-btn">Install</button>
+            <button id="install-close">✕</button>
+        </div>
+        
+        <header>
+            <h1 id="location-name">Locating...</h1>
+            <p id="current-temp">--°</p>
+            <p id="feels-like">Feels like --°</p>
+            <p id="high-low">H:--° L:--°</p>
+            
+            <!-- Clickable Invisible Toggle Container -->
+            <div id="forecast-toggle" class="forecast-toggle">
+                <p id="short-forecast">Loading forecast...</p>
+                <span class="forecast-arrow">▼</span>
+            </div>
+            
+            <!-- Expandable Detailed Narrative (No card border) -->
+            <div id="detailed-forecast-container" class="detailed-drawer">
+                <p id="detailed-forecast"></p>
+            </div>
+        </header>
+
+        <div id="hourly-forecast-container" class="hourly-scroll-container">
+        <!-- JavaScript will dynamically populate the hours here -->
+        </div>
+
+        <section id="extended-forecast" class="card expandable-card">
+            <div class="expand-header">
+                <h3>Extended Forecast</h3>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="expand-content" id="extended-forecast-content">
+                <!-- JavaScript will inject the daily list here -->
+            </div>
+        </section>
+
+        <!-- Station Conditions Grid -->
+        <section id="current-conditions" class="card">
+            <div class="condition">
+                <span class="label">Humidity</span>
+                <span id="humidity" class="value">--%</span>
+            </div>
+            <div class="condition">
+                <span class="label">Wind</span>
+                <span id="wind" class="value">-- mph</span>
+            </div>
+            <div class="condition">
+                <span class="label">Pressure</span>
+                <span id="pressure" class="value">-- inHg</span>
+            </div>
+            <div class="condition">
+                <span class="label">Visibility</span>
+                <span id="visibility" class="value">-- mi</span>
+            </div>
+        </section>
+
+        <!-- Side-by-Side Astro Cards -->
+        <div id="astro-conditions">
+            <section class="card astro-card">
+                <h3>Sun</h3>
+                <div class="condition">
+                    <span class="label">Sunrise</span>
+                    <span id="sunrise" class="value">--:--</span>
+                </div>
+                <div class="condition">
+                    <span class="label">Sunset</span>
+                    <span id="sunset" class="value">--:--</span>
+                </div>
+            </section>
+
+            <section class="card astro-card">
+                <h3>Moon</h3>
+                <div class="condition">
+                    <span class="label">Phase</span>
+                    <span id="moon-phase" class="value" style="font-size: 1rem;">--</span>
+                </div>
+                <div class="condition">
+                    <span class="label">Moonrise</span>
+                    <span id="moonrise" class="value">--:--</span>
+                </div>
+                <div class="condition">
+                    <span class="label">Moonset</span>
+                    <span id="moonset" class="value">--:--</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- Side-by-Side UV and AQI Cards -->
+        <div id="extra-conditions">
+            <section class="card extra-card">
+                <h3>Air Quality</h3>
+                <div class="condition">
+                    <span class="label">US AQI</span>
+                    <span id="aqi-value" class="value" style="font-size: 1.8rem;">--</span>
+                </div>
+                <div class="condition">
+                    <span id="aqi-desc" class="value" style="font-size: 0.85rem; margin-top: 0;">--</span>
+                </div>
+            </section>
+
+            <section class="card extra-card">
+                <h3>UV Index</h3>
+                <div class="condition">
+                    <span class="label">Current</span>
+                    <span id="uv-current" class="value" style="font-size: 1.8rem;">--</span>
+                </div>
+                <div class="condition" style="flex-direction: row; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px;">
+                    <span id="uv-desc" class="value" style="font-size: 0.85rem; margin-top: 0;">--</span>
+                    <span style="font-size: 0.75rem; opacity: 0.7;">High: <span id="uv-max">--</span></span>
+                </div>
+            </section>
+        </div>
+        
+        <!-- API Required Attribution -->
+        <a href="https://sunrise-sunset.org/" target="_blank" id="attribution">Solar data by Sunrise-Sunset.org</a>
+    </main>
+
+    <!-- TEMPORARY TESTING BUTTON -->
+    <div id="debug-panel" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 12px; font-size: 14px; border: 1px solid rgba(255,255,255,0.2); display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(5px);">
+        <div style="font-weight: bold; text-align: center; border-bottom: 1px solid #555; padding-bottom: 5px;">Test Controls</div>
+        
+        <label style="display: flex; justify-content: space-between;">Weather: 
+            <select id="test-weather" style="background: #333; color: white; border: none; border-radius: 4px; margin-left: 10px;">
+                <option value="Sunny">Clear / Sunny</option>
+                <option value="Partly Cloudy">Partly Cloudy</option>
+                <option value="Overcast">Overcast</option>
+                <option value="Rain">Rain</option>
+                <option value="Thunderstorm">Thunderstorm</option>
+                <option value="Snow">Snow</option>
+                <option value="Heavy Snow">Heavy Snow</option>
+            </select>
+        </label>
+
+        <label style="display: flex; justify-content: space-between; flex-direction: column;">
+            <span>Wind Speed (<span id="test-wind-val">5</span> mph):</span>
+            <input type="range" id="test-wind" min="0" max="60" value="5" style="margin-top: 5px;">
+        </label>
+
+        <label style="display: flex; justify-content: space-between; flex-direction: column;">
+            <span>Time of Day (0-24hr):</span>
+            <input type="range" id="test-time" min="0" max="24" step="0.5" value="12" style="margin-top: 5px;">
+        </label>
+    </div>
+    <!-- TEMPORARY TESTING BUTTON END-->
+
+    <!-- Link to our logic -->
+    <script src="app.js?v=4"></script>
+</body>
+</html>

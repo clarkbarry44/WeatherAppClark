@@ -1,0 +1,781 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #ffffff;
+    /* Lock the body so the animated background never moves or bounces */
+    height: 100vh;
+    height: 100dvh; /* Uses exact native iOS screen height to prevent bottom clipping */
+    overflow: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Move scrolling, padding, and layout to the app container */
+/* Move scrolling, padding, and layout to the app container */
+main {
+    z-index: 10;
+    width: 100%;
+    max-width: 350px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 60px 20px 40px;
+    
+    /* 1. Force scroll physics even if content is short */
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain; /* Prevents desktop browser bounce chaining */
+    
+    /* 2. Hide scrollbars for Firefox and Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    
+    /* Keep everything centered */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+}
+
+/* 3. Hide scrollbars for Chrome, Safari, and iOS */
+main::-webkit-scrollbar {
+    display: none;
+}
+
+header {
+    margin-bottom: 20px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+#location-name {
+    font-size: 2rem;
+    font-weight: 400; /* Dropped from 500 to 300 (Light) */
+}
+
+#current-temp {
+    font-size: 7rem;
+    font-weight: 100;
+    line-height: 1; /* Removes the invisible extra vertical space */
+    margin: 12px 0; /* Creates an exact, equal 12px gap above and below the number */
+    transform: translateX(12px);
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+#high-low {
+    font-size: 1.25rem;
+    font-weight: 400;
+    margin-top: 0; /* Remove the old -15px negative margin */
+    margin-bottom: 8px;
+    color: #ffffff;
+}
+
+#short-forecast {
+    font-size: 1.3rem;
+    opacity: 0.8;
+}
+
+.card {
+    margin-top: 20px;
+    padding: 18px;
+    background-color: rgba(67, 73, 80, 0.2); /* Reduced opacity for translucent look */
+    backdrop-filter: blur(10px); /* Apple-style translucent blur */
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    font-size: 1rem;
+    color: #ffffff;
+    width: 100%;
+    text-align: left;
+}
+
+#current-conditions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.condition { display: flex; flex-direction: column; }
+.condition .label { font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; }
+.condition .value { font-size: 1.2rem; font-weight: 500; margin-top: 4px; }
+
+/* ---------------------------------------------------- */
+/* Astro Condition Cards & Attribution                  */
+/* ---------------------------------------------------- */
+
+#astro-conditions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 350px;
+    margin-top: 16px; 
+}
+
+.astro-card {
+    margin-top: 0; 
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.astro-card h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+}
+
+#attribution {
+    display: block;
+    margin-top: 30px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+}
+
+/* ---------------------------------------------------- */
+/* Dynamic & Slightly Live Background Styling           */
+/* ---------------------------------------------------- */
+
+#weather-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1; /* Puts it behind everything */
+    transition: background 0.5s ease; /* Smooth transition between conditions */
+}
+
+/* Define high-quality Apple-style Atmospheric Gradients */
+body.sunny #weather-background {
+    background: linear-gradient(180deg, #3b98ce 0%, #589dc8 50%, #7db9ea 100%);
+}
+
+body.mostly-sunny #weather-background {
+    background: linear-gradient(180deg, #255585 0%, #5c8eb3 100%); 
+}
+
+body.partly-cloudy #weather-background {
+    background: linear-gradient(180deg, #376387 0%, #7296b0 100%);
+}
+
+body.mostly-cloudy #weather-background {
+    background: linear-gradient(180deg, #445868 0%, #7b8d9a 100%);
+}
+
+body.cloudy #weather-background {
+    background: linear-gradient(180deg, #3e505e 0%, #687985 100%);
+}
+
+body.rain #weather-background {
+    background: linear-gradient(180deg, #202d3a 0%, #3b4e5e 100%);
+}
+
+body.thunderstorm #weather-background {
+    background: linear-gradient(180deg, #0d131a 0%, #1a2430 100%);
+}
+
+body.snow #weather-background {
+    background: linear-gradient(180deg, #6c7c8a 0%, #aab8c2 100%);
+}
+
+/* ---------------------------------------------------- */
+/* Time-of-Day Specific Background Gradients            */
+/* ---------------------------------------------------- */
+
+body.sunrise #weather-background {
+    /* Dawn: Deep twilight blue fading into morning peach and warm gold */
+    background: linear-gradient(180deg, #1d2b45 0%, #464a6e 40%, #c47667 75%, #f2ab72 100%);
+}
+
+body.sunset #weather-background {
+    /* Dusk: High-altitude dark navy descending into vibrant purple, magenta, and burnt orange */
+    background: linear-gradient(180deg, #4862a6 0%, #6a4a7d 45%, #a95961 75%, #de794e 100%);
+}
+
+body.is-night.sunny #weather-background, body.is-night.mostly-sunny #weather-background {
+    background: linear-gradient(180deg, #09101c 0%, #15243b 100%);
+}
+
+body.is-night.partly-cloudy #weather-background, body.is-night.mostly-cloudy #weather-background, body.is-night.cloudy #weather-background {
+    background: linear-gradient(180deg, #0d1520 0%, #1f2b38 100%);
+}
+
+body.is-night.rain #weather-background, body.is-night.thunderstorm #weather-background, body.is-night.snow #weather-background {
+    background: linear-gradient(180deg, #070b12 0%, #111824 100%);
+}
+
+/* ---------------------------------------------------- */
+/* Celestial Bodies (Sun, Moon, Stars)                  */
+/* ---------------------------------------------------- */
+
+.stars {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 160px 120px, #ffffff, rgba(0,0,0,0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0;
+    transition: opacity 2s ease;
+    z-index: 0;
+}
+
+.celestial-body {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    /* Added left/top transitions to ensure smooth movement if data updates live */
+    transition: opacity 1.5s ease, left 0.5s linear, top 0.5s linear;
+    z-index: 1;
+    opacity: 0; 
+}
+
+.sun {
+    left: calc(var(--sun-x, 50) * 1vw - 33px);
+    top: calc(var(--sun-y, 100) * 1vh - 33px);
+    width: 66px;
+    height: 66px;
+    
+    background: #ffffff;
+    
+    /* Melts the hard pixel edge of the circle seamlessly into the glow */
+    filter: blur(5px);
+    
+    box-shadow: 
+        0 0 30px 15px #ffffff,
+        0 0 70px 35px rgba(255, 235, 160, 0.8),
+        0 0 130px 80px rgba(255, 210, 100, 0.4),
+        0 0 180px 130px rgba(255, 160, 50, 0.15);
+}
+
+.moon {
+    /* Doubled in size (132px) and adjusted centering offset (-66px) */
+    left: calc(var(--moon-x, 50) * 1vw - 66px);
+    top: calc(var(--moon-y, 100) * 1vh - 66px);
+    width: 132px;
+    height: 132px;
+    
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    transform: rotate(var(--moon-rot, 0deg));
+    
+    /* Drops the black edges to transparent, blending seamlessly with the sky */
+    mix-blend-mode: screen;
+    
+    /* Brightens the image by 40% and applies the subtle nighttime glow */
+    filter: brightness(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
+}
+
+/* Removes the moon's glow entirely during daylight hours, but preserves the brightness boost */
+body.is-day .moon {
+    filter: brightness(1);
+}
+
+/* Visibility Rules Based on Day/Night & Moon Status */
+body.is-day .sun { opacity: 1; }
+body.moon-up .moon { opacity: 1; }
+
+/* Dim sun based on cloud cover during the day */
+body.is-day.mostly-sunny .sun { opacity: 0.8; }
+body.is-day.partly-cloudy .sun { opacity: 0.35; }
+body.is-day.mostly-cloudy .sun, body.is-day.cloudy .sun, body.is-day.rain .sun, body.is-day.thunderstorm .sun, body.is-day.snow .sun { opacity: 0; }
+
+/* Dim moon based on cloud cover when it is up */
+body.mostly-sunny.moon-up .moon { opacity: 0.8; } 
+body.partly-cloudy.moon-up .moon { opacity: 0.35; }
+body.mostly-cloudy.moon-up .moon, body.cloudy.moon-up .moon, body.rain.moon-up .moon, body.thunderstorm.moon-up .moon, body.snow.moon-up .moon { opacity: 0; }
+
+/* Show stars only on relatively clear nights */
+body.is-night.sunny .stars, body.is-night.mostly-sunny .stars { opacity: 0.8; }
+body.is-night.partly-cloudy .stars { opacity: 0.4; }
+
+/* ---------------------------------------------------- */
+/* Hourly Forecast Scroll Container                     */
+/* ---------------------------------------------------- */
+.hourly-scroll-container {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; /* Native iOS momentum scroll */
+    gap: 18px;
+    padding: 20px 5px;
+    margin: 20px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    
+    /* Hide scrollbars for Firefox and Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* Hide scrollbars for Chrome, Safari, and iOS */
+.hourly-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.hourly-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 50px;
+    font-size: 14px;
+}
+
+.hourly-time {
+    font-weight: 500;
+    margin-bottom: 8px;
+    white-space: nowrap;
+}
+
+.hourly-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    user-select: none;
+}
+
+.hourly-temp {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.hourly-precip {
+    color: #7bd0ff; /* Light blue for precipitation */
+    font-size: 12px;
+    font-weight: 600;
+    min-height: 14px; /* Keeps layout from jumping if no rain is expected */
+    margin-top: 4px;
+}
+
+.hourly-astro {
+    color: #ffda75; /* Warm gold to distinguish from regular hours */
+}
+
+/* ---------------------------------------------------- */
+/* Extended Forecast Accordion                          */
+/* ---------------------------------------------------- */
+
+.expandable-card {
+    cursor: pointer;
+    overflow: hidden;
+    margin-top: 16px;
+    -webkit-tap-highlight-color: transparent; /* Removes blue tap highlight on iOS */
+}
+
+.expand-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.expand-header h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* Expanded State Toggles */
+.expandable-card.expanded .arrow {
+    transform: rotate(180deg);
+}
+
+.expand-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease, margin-top 0.3s ease;
+}
+
+.expandable-card.expanded .expand-content {
+    max-height: 1500px; /* Arbitrary large height to allow full expansion */
+    opacity: 1;
+    margin-top: 16px;
+}
+
+/* Individual Day Row Styling */
+.extended-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 16px;
+}
+
+.extended-item:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.extended-icon {
+    font-size: 24px;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.extended-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.extended-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.extended-desc {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+
+.extended-temp {
+    font-weight: bold;
+    font-size: 1rem;
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 45px;
+}
+
+/* Individual Row Clickable Styling */
+.extended-item {
+    cursor: pointer;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.extended-row-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Expandable Detailed Description */
+.extended-detailed-text {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.85);
+    padding-left: 48px; /* Indents below the text, aligned past the icon */
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.25s ease;
+}
+
+.extended-item.row-expanded .extended-detailed-text {
+    max-height: 250px;
+    opacity: 1;
+    margin-top: 8px;
+}
+
+/* Borderless Interactive Short Forecast */
+.forecast-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 6px 16px;
+    margin: 0 auto;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+#short-forecast {
+    font-size: 1.3rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.forecast-arrow {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-top: 4px;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+}
+
+/* Arrow rotation when open */
+.forecast-toggle.open .forecast-arrow {
+    transform: rotate(180deg);
+    opacity: 0.9;
+}
+
+/* Smooth Accordion Text Drawer (No card styling) */
+.detailed-drawer {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    transition: max-height 0.4s ease, opacity 0.35s ease, margin-top 0.3s ease;
+}
+
+.detailed-drawer.open {
+    max-height: 250px;
+    opacity: 1;
+    margin-top: 10px;
+}
+
+#detailed-forecast {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Feels Like & Extra Conditions Styling */
+#feels-like {
+    font-size: 1.1rem;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+#extra-conditions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 350px;
+    margin-top: 16px;
+}
+
+.extra-card {
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.extra-card h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+}
+
+main > * { flex-shrink: 0; }
+
+/* ---------------------------------------------------- */
+/* Photorealistic Image Clouds & Canvas Overlay         */
+/* ---------------------------------------------------- */
+
+#clouds-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1; 
+}
+
+#weather-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 2; /* In front of clouds, behind UI */
+}
+
+/* Image-Based Cloud Wrapper (Handles Movement) */
+.cloud-wrapper {
+    position: absolute;
+    opacity: 0;
+    animation: drift linear infinite, fadeInOut linear infinite;
+    will-change: transform;
+}
+
+/* The image itself (Handles flip/stretching) */
+.cloud-image {
+    width: 100%;
+    height: 100%;
+    background-image: url('cloud.png'); /* YOUR IMPORTED PNG */
+    background-size: 100% 100%; /* Stretches to fill whatever dimensions JS dictates */
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Apply tints to the wrapper so both normal and canopy clouds get colored */
+body.is-night .cloud-wrapper { filter: brightness(0.3) sepia(0.2) hue-rotate(180deg); }
+body.thunderstorm .cloud-wrapper, body.rain .cloud-wrapper { filter: brightness(0.4) contrast(1.2); }
+body.sunrise .cloud-wrapper { filter: brightness(0.8) sepia(0.4) hue-rotate(-15deg); }
+body.sunset .cloud-wrapper { filter: brightness(0.6) sepia(0.5) hue-rotate(300deg); }
+
+/* Fog Layer Overlay */
+body.fog::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(200,210,220,0.8) 100%);
+    pointer-events: none;
+    z-index: 3;
+    animation: fogDrift 10s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+    0% { transform: translateX(-300px); }
+    100% { transform: translateX(120vw); }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    10%, 90% { opacity: var(--cloud-opacity, 0.8); }
+}
+
+@keyframes fogDrift {
+    0% { opacity: 0.7; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(-10px); }
+}
+
+/* ---------------------------------------------------- */
+/* Custom Pull-to-Refresh                               */
+/* ---------------------------------------------------- */
+
+#pull-to-refresh {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5; /* Behind main UI, but above weather background */
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+}
+
+.spinner.spinning {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { 
+    100% { transform: rotate(360deg); } 
+}
+
+/* Update main container to support dragging transitions */
+main {
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+main.dragging {
+    transition: none; /* Disable transition while finger is actively rubber-banding */
+}
+
+/* ---------------------------------------------------- */
+/* Add to Home Screen Prompt                            */
+/* ---------------------------------------------------- */
+
+.install-card {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 350px;
+    background: rgba(40, 45, 55, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: opacity 0.3s ease, bottom 0.3s ease;
+}
+
+.install-card.hidden {
+    opacity: 0;
+    pointer-events: none;
+    bottom: -100px;
+}
+
+.install-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.install-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+}
+
+.install-text h4 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+}
+
+.install-text p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.3;
+}
+
+#install-btn {
+    background: #0a84ff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#install-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
